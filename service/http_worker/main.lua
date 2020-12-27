@@ -44,6 +44,10 @@ local function load_file(path)
 	if string.find(filename,".png") or string.find(filename,".gif") then
 		header["Content-type"] = "Content-Type: image/png"
 	end
+	
+	if string.find(filename,".js") then
+		header["Content-type"] = "application/x-javascript"
+	end
     return data,header
 end
 

@@ -1,4 +1,4 @@
 {
-    "host": "localhost",
+    "host": "demos.workerman.net",
     "port": 8000
 }
