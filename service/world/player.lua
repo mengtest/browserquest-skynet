@@ -1,10 +1,11 @@
 local Character = require "character"
+local class = require "class"
 
-local M = {}
+local M = class.Class(Character)
 
 function M.new()
     local o = {}
-    setmetatable(o,{__index=M})
+    setmetatable(o,M)
     return o
 end
 

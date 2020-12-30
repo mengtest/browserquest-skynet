@@ -1,18 +1,11 @@
-local class = require "class"
-local Entity = require "entity"
+local M = {}
 
-local M = class.Class(Entity)
-
-function M:init(id, type, kind, x, y)
-    self.id = parseInt(id)
+function M:init(id,type,kind,x,y)
+    self.id = id
     self.type = type
     self.kind = kind
     self.x = x
     self.y = y
-end
-
-function M:destroy()
-
 end
 
 function M:_getBaseState()
@@ -44,10 +37,13 @@ end
 function M:getPositionNextTo(entity)
     local pos = nil
     if entity then
-        pos = {x = entity.x,y = entity.y}
+        pos = {}
         -- This is a quick & dirty way to give mobs a random position
         -- close to another entity.
         local r = math.random(0,3)
+        
+        pos.x = entity.x
+        pos.y = entity.y
         if r === 0 then
             pos.y -= 1
         elseif r === 1 then
