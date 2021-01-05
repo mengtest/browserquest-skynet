@@ -2,6 +2,7 @@ local skynet = require "skynet"
 local socket = require "skynet.socket"
 local service = require "skynet.service"
 local websocket = require "http.websocket"
+local json = require "dkjson"
 
 local handle = {}
 
@@ -23,7 +24,8 @@ end
 function handle.message(id, msg, msg_type)
 	assert(msg_type == "binary" or msg_type == "text")
 	skynet.error(msg_type.." "..msg)
-	websocket.write(id, msg)
+	local package = json.decode(msg)
+    skynet.send("world","lua","message",skynet.self(),id,package)
 end
 
 function handle.ping(id)
@@ -43,10 +45,13 @@ function handle.error(id)
 end
 
 skynet.start(function ()
-	skynet.dispatch("lua", function (_,_, id, protocol, addr)
-		local ok, err = websocket.accept(id, handle, protocol, addr)
-		if not ok then
-			print(err)
-		end
+	skynet.dispatch("lua", function (_,_, id, cmd,...)
+		if cmd == "connect" then
+			local protocol, addr = table.unpack({...})
+			local ok, err = websocket.accept(id, handle, protocol, addr)
+			if not ok then
+				print(err)
+			end
+	    end
 	end)
 end)

@@ -715,28 +715,8 @@ function(InfoManager, BubbleManager, Renderer, Map, Animation, Sprite, AnimatedT
                 connecting = false; // always in dispatcher mode in the build version
     
             this.client = new GameClient(this.host, this.port);
-            
-            //>>excludeStart("prodHost", pragmas.prodHost);
-            var config = this.app.config.local || this.app.config.dev;
-            if(config) {
-                this.client.connect(config.dispatcher); // false if the client connects directly to a game server
-                connecting = true;
-            }
-            //>>excludeEnd("prodHost");
-            
-            //>>includeStart("prodHost", pragmas.prodHost);
-            if(!connecting) {
-                this.client.connect(true); // always use the dispatcher in production
-            }
-            //>>includeEnd("prodHost");
-            
-            this.client.onDispatched(function(host, port) {
-                log.debug("Dispatched to game server "+host+ ":"+port);
-                
-                self.client.host = host;
-                self.client.port = port;
-                self.client.connect(); // connect to actual game server
-            });
+			this.client.connect(); // false if the client connects directly to a game server
+			connecting = true;
             
             this.client.onConnected(function() {
                 log.info("Starting client/server handshake");

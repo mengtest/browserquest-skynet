@@ -3,7 +3,7 @@ local function pos(x, y)
 end
 
 local function equalPositions(pos1, pos2)
-    return pos1.x == pos2.x && pos2.y == pos2.y
+    return pos1.x == pos2.x and pos2.y == pos2.y
 end
 
 local M = {}
@@ -54,7 +54,8 @@ function M:ready(f)
 end
 
 function M:tileIndexToGridPosition(tileNum)
-    local x = 0,y = 0
+    local x = 0
+    local y = 0
     
     local getX = function(num, w)
         if(num == 0) then
@@ -94,7 +95,7 @@ function M:generateCollisionGrid()
 end
 
 function M:isOutOfBounds(x, y)
-    return x <= 0  x >= self.width  y <= 0  y >= self.height
+    return x <= 0 or x >= self.width or y <= 0 or y >= self.height
 end
 
 function M:isColliding (x, y)
@@ -110,9 +111,9 @@ function M:GroupIdToGroupPosition(id)
     return pos(parseInt(posArray[0]), parseInt(posArray[1]))
 end
 
-function M:forEachGroup:(callback)
-    local width = self.groupWidth,
-        height = self.groupHeight
+function M:forEachGroup(callback)
+    local width = self.groupWidth
+    local height = self.groupHeight
     
     for x=0,width-1 do
         for y=0,height-1 do
@@ -122,10 +123,10 @@ function M:forEachGroup:(callback)
 end
 
 function M:getGroupIdFromPosition(x, y)
-    local w = self.zoneWidth,
-        h = self.zoneHeight,
-        gx = Math.floor((x - 1) / w),
-        gy = Math.floor((y - 1) / h)
+    local w = self.zoneWidth
+    local h = self.zoneHeight
+    local gx = Math.floor((x - 1) / w)
+    local gy = Math.floor((y - 1) / h)
 
     return tostring(gx) .. '-' .. tostring(gy)
 end
@@ -142,13 +143,13 @@ function M:getAdjacentGroupPositions(id)
     -- groups connected via doors
     each(self.connectedGroups[id], function(position)
         -- don't add a connected group if it's already part of the surrounding ones.
-        if(!_.any(list, function(groupPos) return equalPositions(groupPos, position) }))
+        if not any(list, function(groupPos) return equalPositions(groupPos, position) end) then
             list.push(position)
         end
     end)
     
     return reject(list, function(pos) 
-        return pos.x < 0 || pos.y < 0 || pos.x >= self.groupWidth || pos.y >= self.groupHeight
+        return pos.x < 0 or pos.y < 0 or pos.x >= self.groupWidth or pos.y >= self.groupHeight
     end)
 end
 
@@ -162,22 +163,22 @@ end
 
 function M.initConnectedGroups(doors)
     self.connectedGroups = {}
-    _.each(doors, function(door)
-        local groupId = self.getGroupIdFromPosition(door.x, door.y),
-            connectedGroupId = self.getGroupIdFromPosition(door.tx, door.ty),
-            connectedPosition = self.GroupIdToGroupPosition(connectedGroupId)
+    each(doors, function(door)
+        local groupId = self.getGroupIdFromPosition(door.x, door.y)
+        local connectedGroupId = self.getGroupIdFromPosition(door.tx, door.ty)
+        local connectedPosition = self.GroupIdToGroupPosition(connectedGroupId)
         
-        if(groupId in self.connectedGroups)
+        if self.connectedGroups[groupId] then
             self.connectedGroups[groupId].push(connectedPosition)
-        } else {
-            self.connectedGroups[groupId] = [connectedPosition]
-        }
-    })
+        else
+            self.connectedGroups[groupId] = {connectedPosition}
+        end
+    end)
 end
 
 function initCheckpoints(cpList)
     self.checkpoints = {}
-    self.startingAreas = []
+    self.startingAreas = {}
     
     each(cpList, function(cp)
         local checkpoint = Checkpoint.new(cp.id, cp.x, cp.y, cp.w, cp.h)
@@ -193,9 +194,9 @@ function M:getCheckpoint(id)
 end
 
 function M:getRandomStartingPosition()
-    local nbAreas = size(self.startingAreas),
-        i = Utils.randomInt(0, nbAreas-1),
-        area = self.startingAreas[i]
+    local nbAreas = size(self.startingAreas)
+    local i = math.random(0, nbAreas-1)
+    local area = self.startingAreas[i]
     
     return area.getRandomPosition()
 end

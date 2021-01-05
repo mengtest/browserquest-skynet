@@ -26,29 +26,29 @@ function M:init(connection, worldServer)
         local action = parseInt(message[0])
         
         log.debug("Received: "+message)
-        if !check(message))
+        if ~check(message) then
             self.connection.close("Invalid "+Types.getMessageTypeAsString(action)+" message format: "+message)
             return
-        }
+        end
         
-        if !self.hasEnteredGame && action !== Types.Messages.HELLO) // HELLO must be the first message
+        if ~self.hasEnteredGame and action ~= Types.Messages.HELLO then -- HELLO must be the first message
             self.connection.close("Invalid handshake message: "+message)
             return
-        }
-        if self.hasEnteredGame && !self.isDead && action == Types.Messages.HELLO) // HELLO can be sent only once
+        end
+        if self.hasEnteredGame and ~self.isDead and action == Types.Messages.HELLO then -- HELLO can be sent only once
             self.connection.close("Cannot initiate handshake twice: "+message)
             return
-        }
+        end
         
         self.resetTimeout()
         
-        if action == Types.Messages.HELLO)
+        if action == Types.Messages.HELLO then
             local name = Utils.sanitize(message[1])
             
-            // If name was cleared by the sanitizer, give a default name.
-            // Always ensure that the name is not longer than a maximum length.
-            // (also enforced by the maxlength attribute of the name input element).
-            self.name = (name == "") ? "lorem ipsum" : name.substr(0, 15)
+            -- If name was cleared by the sanitizer, give a default name.
+            -- Always ensure that the name is not longer than a maximum length.
+            -- (also enforced by the maxlength attribute of the name input element).
+            self.name = name == "" and "lorem ipsum" or name.substr(0, 15)
             
             self.kind = Types.Entities.WARRIOR
             self.equipArmor(message[2])
@@ -60,190 +60,171 @@ function M:init(connection, worldServer)
             self.server.addPlayer(self)
             self.server.enter_callback(self)
 
-            self.send([Types.Messages.WELCOME, self.id, self.name, self.x, self.y, self.hitPoints])
+            self.send({Types.Messages.WELCOME, self.id, self.name, self.x, self.y, self.hitPoints})
             self.hasEnteredGame = true
             self.isDead = false
-        }
-        else if action == Types.Messages.WHO)
+        elseif action == Types.Messages.WHO then
             message.shift()
             self.server.pushSpawnsToPlayer(self, message)
-        }
-        else if action == Types.Messages.ZONE)
+        elseif action == Types.Messages.ZONE then
             self.zone_callback()
-        }
-        else if action == Types.Messages.CHAT)
+        elseif action == Types.Messages.CHAT then
             local msg = Utils.sanitize(message[1])
             
-            // Sanitized messages may become empty. No need to broadcast empty chat messages.
-            if msg && msg !== "")
-                msg = msg.substr(0, 60) // Enforce maxlength of chat input
-                self.broadcastToZone(new Messages.Chat(self, msg), false)
-            }
-        }
-        else if action == Types.Messages.MOVE)
-            if self.move_callback)
-                local x = message[1],
-                    y = message[2]
+            -- Sanitized messages may become empty. No need to broadcast empty chat messages.
+            if msg and msg ~= "" then
+                msg = msg.substr(0, 60) -- Enforce maxlength of chat input
+                self.broadcastToZone(Messages.Chat.new(self, msg), false)
+            end
+        elseif action == Types.Messages.MOVE then
+            if self.move_callback then
+                local x = message[1]
+                local y = message[2]
                 
-                if self.server.isValidPosition(x, y))
+                if self.server.isValidPosition(x, y) then
                     self.setPosition(x, y)
                     self.clearTarget()
                     
-                    self.broadcast(new Messages.Move(self))
+                    self.broadcast(Messages.Move.new(self))
                     self.move_callback(self.x, self.y)
-                }
-            }
-        }
-        else if action == Types.Messages.LOOTMOVE)
-            if self.lootmove_callback)
+                end
+            end
+        elseif action == Types.Messages.LOOTMOVE then
+            if self.lootmove_callback then
                 self.setPosition(message[1], message[2])
                 
                 local item = self.server.getEntityById(message[3])
-                if item)
+                if item then
                     self.clearTarget()
 
-                    self.broadcast(new Messages.LootMove(self, item))
+                    self.broadcast(Messages.LootMove.new(self, item))
                     self.lootmove_callback(self.x, self.y)
-                }
-            }
-        }
-        else if action == Types.Messages.AGGRO)
-            if self.move_callback)
+                end
+            end
+        elseif action == Types.Messages.AGGRO then
+            if self.move_callback then
                 self.server.handleMobHate(message[1], self.id, 5)
-            }
-        }
-        else if action == Types.Messages.ATTACK)
+            end
+        elseif action == Types.Messages.ATTACK then
             local mob = self.server.getEntityById(message[1])
             
-            if mob)
+            if mob then
                 self.setTarget(mob)
                 self.server.broadcastAttacker(self)
-            }
-        }
-        else if action == Types.Messages.HIT)
+            end
+        elseif action == Types.Messages.HIT then
             local mob = self.server.getEntityById(message[1])
-            if mob)
+            if mob then
                 local dmg = Formulas.dmg(self.weaponLevel, mob.armorLevel)
                 
-                if dmg > 0)
+                if dmg > 0 then
                     mob.receiveDamage(dmg, self.id)
                     self.server.handleMobHate(mob.id, self.id, dmg)
                     self.server.handleHurtEntity(mob, self, dmg)
-                }
-            }
-        }
-        else if action == Types.Messages.HURT)
+                end
+            end
+        elseif action == Types.Messages.HURT then
             local mob = self.server.getEntityById(message[1])
-            if mob && self.hitPoints > 0)
-                self.hitPoints -= Formulas.dmg(mob.weaponLevel, self.armorLevel)
+            if mob and self.hitPoints > 0 then
+                self.hitPoints = self.hitPoints - Formulas.dmg(mob.weaponLevel, self.armorLevel)
                 self.server.handleHurtEntity(self)
                 
-                if self.hitPoints <= 0)
+                if self.hitPoints <= 0 then
                     self.isDead = true
-                    if self.firepotionTimeout)
+                    if self.firepotionTimeout then
                         clearTimeout(self.firepotionTimeout)
-                    }
-                }
-            }
-        }
-        else if action == Types.Messages.LOOT)
+                    end
+                end
+            end
+        elseif action == Types.Messages.LOOT then
             local item = self.server.getEntityById(message[1])
             
-            if item)
+            if item then
                 local kind = item.kind
                 
-                if Types.isItem(kind))
+                if Types.isItem(kind) then
                     self.broadcast(item.despawn())
                     self.server.removeEntity(item)
                     
-                    if kind == Types.Entities.FIREPOTION)
+                    if kind == Types.Entities.FIREPOTION then
                         self.updateHitPoints()
                         self.broadcast(self.equip(Types.Entities.FIREFOX))
                         self.firepotionTimeout = setTimeout(function()
-                            self.broadcast(self.equip(self.armor)) // return to normal after 15 sec
+                            self.broadcast(self.equip(self.armor)) -- return to normal after 15 sec
                             self.firepotionTimeout = nil
-                        end 15000)
-                        self.send(new Messages.HitPoints(self.maxHitPoints).serialize())
-                    } else if Types.isHealingItem(kind))
+                        end,15000)
+                        self.send(Messages.HitPoints.new(self.maxHitPoints).serialize())
+                    elseif Types.isHealingItem(kind) then
                         local amount
                         
-                        switch(kind)
-                            case Types.Entities.FLASK: 
+                        if kind == Types.Entities.FLASK then
                                 amount = 40
-                                break
-                            case Types.Entities.BURGER: 
+                        elseif kind == Types.Entities.BURGER then
                                 amount = 100
-                                break
-                        }
+                        end
                         
-                        if !self.hasFullHealth())
+                        if ~self.hasFullHealth() then
                             self.regenHealthBy(amount)
                             self.server.pushToPlayer(self, self.health())
-                        }
-                    } else if Types.isArmor(kind) || Types.isWeapon(kind))
+                        end
+                    elseif Types.isArmor(kind) or Types.isWeapon(kind) then
                         self.equipItem(item)
                         self.broadcast(self.equip(kind))
-                    }
-                }
-            }
-        }
-        else if action == Types.Messages.TELEPORT)
-            local x = message[1],
-                y = message[2]
+                    end
+                end
+            end
+        elseif action == Types.Messages.TELEPORT then
+            local x = message[1]
+            local y = message[2]
             
-            if self.server.isValidPosition(x, y))
+            if self.server.isValidPosition(x, y) then
                 self.setPosition(x, y)
                 self.clearTarget()
                 
-                self.broadcast(new Messages.Teleport(self))
+                self.broadcast(Messages.Teleport.new(self))
                 
                 self.server.handlePlayerVanish(self)
                 self.server.pushRelevantEntityListTo(self)
-            }
-        }
-        else if action == Types.Messages.OPEN)
+            end
+        elseif action == Types.Messages.OPEN then
             local chest = self.server.getEntityById(message[1])
-            if chest && chest instanceof Chest)
+            if chest  then --and chest instanceof Chest then
                 self.server.handleOpenedChest(chest, self)
-            }
-        }
-        else if action == Types.Messages.CHECK)
+            end
+        elseif action == Types.Messages.CHECK then
             local checkpoint = self.server.map.getCheckpoint(message[1])
-            if checkpoint)
+            if checkpoint then
                 self.lastCheckpoint = checkpoint
-            }
-        }
-        else {
-            if self.message_callback)
+            end
+        else
+            if self.message_callback then
                 self.message_callback(message)
-            }
-        }
-    })
+            end
+        end
+    end)
     
     self.connection.onClose(function()
-        if self.firepotionTimeout)
+        if self.firepotionTimeout then
             clearTimeout(self.firepotionTimeout)
-        }
+        end
         clearTimeout(self.disconnectTimeout)
-        if self.exit_callback)
+        if self.exit_callback then
             self.exit_callback()
-        }
-    })
+        end
+    end)
     
-    self.connection.sendUTF8("go") // Notify client that the HELLO/WELCOME handshake can start
+    self.connection.sendUTF8("go") -- Notify client that the HELLO/WELCOME handshake can start
 end
 
-destroy: function()
-    local self = this
-    
+function M:destroy()
     self.forEachAttacker(function(mob)
         mob.clearTarget()
-    })
+    end)
     self.attackers = {}
     
     self.forEachHater(function(mob)
         mob.forgetPlayer(self.id)
-    })
+    end)
     self.haters = {}
 end
 
@@ -251,9 +232,9 @@ function M:getState()
     local basestate = self._getBaseState()
     local state = {self.name, self.orientation, self.armor, self.weapon}
 
-    if self.target  
-        state.push(self.target)
-    }
+    if self.target then
+        table.insert(state,self.target)
+    end
     
     return basestate.concat(state)
 end
@@ -263,7 +244,7 @@ function M:send(message)
 end
 
 function M:broadcast(message, ignoreSelf)
-    if self.broadcast_callback)
+    if self.broadcast_callback then
         self.broadcast_callback(message, ignoreSelf == nil and true or ignoreSelf)
     end
 end

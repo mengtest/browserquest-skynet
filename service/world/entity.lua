@@ -17,6 +17,10 @@ function M:_getBaseState()
     }
 end
 
+function M:getType()
+    return "unknow"
+end
+
 function M:getState()
     return self:_getBaseState()
 end
@@ -44,14 +48,14 @@ function M:getPositionNextTo(entity)
         
         pos.x = entity.x
         pos.y = entity.y
-        if r === 0 then
-            pos.y -= 1
-        elseif r === 1 then
-            pos.y += 1
-        elseif r === 2 then
-            pos.x -= 1
-        elseif r === 3 then
-            pos.x += 1
+        if r == 0 then
+            pos.y = pos.y - 1
+        elseif r == 1 then
+            pos.y = pos.y + 1
+        elseif r == 2 then
+            pos.x = pos.x - 1
+        elseif r == 3 then
+            pos.x = pos.x + 1
         end
     end
     return pos

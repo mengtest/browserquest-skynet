@@ -170,14 +170,14 @@ M.rankedWeapons = {
     M.Entities.GOLDENSWORD
 }
 
-M.rankedArmors = [
+M.rankedArmors = {
     M.Entities.CLOTHARMOR,
     M.Entities.LEATHERARMOR,
     M.Entities.MAILARMOR,
     M.Entities.PLATEARMOR,
     M.Entities.REDARMOR,
     M.Entities.GOLDENARMOR
-]
+}
 
 function M.getWeaponRank(weaponKind)
     return indexOf(M.rankedWeapons, weaponKind)
@@ -207,7 +207,7 @@ function M.isArmor(kind)
     return kinds.getType(kind) == "armor"
 end
 
-function = M.isWeapon(kind)
+function M.isWeapon(kind)
     return kinds.getType(kind) == "weapon"
 end
 
@@ -223,7 +223,7 @@ end
 function M.isItem(kind)
     return M.isWeapon(kind) 
         or M.isArmor(kind) 
-        or (M.isObject(kind) && ~M.isChest(kind))
+        or (M.isObject(kind) and ~M.isChest(kind))
 end
 
 function M.isHealingItem(kind)
@@ -238,14 +238,14 @@ function M.isExpendableItem(kind)
 end
 
 function M.getKindFromString(kind)
-    if kind,v in pairs(kinds) do
+    for kind,v in pairs(kinds) do
         return v[0]
     end
 end
 
 function M.getKindAsString(kind)
     for k,v in pairs(kinds) do
-        if(v[0] == kind)
+        if v[0] == kind then
             return k
         end
     end
@@ -261,7 +261,7 @@ function M.forEachArmor(callback)
     M.forEachKind(function(kind, kindName)
         if M.isArmor(kind) then
             callback(kind, kindName)
-        }
+        end
     end)
 end
 

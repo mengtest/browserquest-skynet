@@ -48,14 +48,14 @@ function M:getPositionNextTo(entity)
         -- This is a quick & dirty way to give mobs a random position
         -- close to another entity.
         local r = math.random(0,3)
-        if r === 0 then
-            pos.y -= 1
-        elseif r === 1 then
-            pos.y += 1
-        elseif r === 2 then
-            pos.x -= 1
-        elseif r === 3 then
-            pos.x += 1
+        if r == 0 then
+            pos.y = pos.y - 1
+        elseif r == 1 then
+            pos.y = pos.y + 1
+        elseif r == 2 then
+            pos.x = pos.x - 1
+        elseif r == 3 then
+            pos.x = pos.x + 1
         end
     end
     return pos

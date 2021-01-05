@@ -6,4 +6,6 @@ skynet.start(function()
 	skynet.newservice("http_server")
 	
 	skynet.newservice("websocket_server")
+
+	skynet.newservice("world")
 end)
